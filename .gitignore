@@ -40,5 +40,8 @@ terraform.rc
 # Ignore zip files
 *.zip
 
+# ASH output
+ash_output/
+
 # Others
 .DS_Store

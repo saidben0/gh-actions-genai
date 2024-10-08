@@ -15,6 +15,7 @@ logger.setLevel("INFO")
 queue_url = os.environ.get('QUEUE_URL')
 dest_bucket = os.environ.get('BATCH_DATA_BUCKET')
 role_arn = os.environ.get('LLANDMAN_DEV_LAMBDA_ROLE_ARN')
+tags = os.environ.get('TAGS')
 
 def lambda_handler(event, context):
     s3 = boto3.client('s3')
@@ -186,6 +187,12 @@ def lambda_handler(event, context):
         }
     })
     
+    tagging = []
+
+    tags_dict = json.loads(tags)
+    for key, value in tags_dict.items():
+        tagging.append({"key": key, "value": value})
+
     bedrock = boto3.client(service_name="bedrock", region_name="us-east-1")
     job_name = f"{project_name}-batch-inference-{data_folder}"
     try:
@@ -196,15 +203,7 @@ def lambda_handler(event, context):
                                                     inputDataConfig=inputDataConfig,
                                                     outputDataConfig=outputDataConfig,
                                                     timeoutDurationInHours=72,
-                                                    tags=[
-                                                        {"key":"Team", "value":"Tech-Land-Manufacturing@enverus.com"},
-                                                        {"key":"Dataset", "value":"land"},
-                                                        {"key":"SourceCode", "value":"https://github.com/enverus-ea/land.llandman"},
-                                                        {"key":"Component", "value":"llandman"},
-                                                        {"key":"BusinessUnit", "value":"ea"},
-                                                        {"key":"Product", "value":"courthouse"},
-                                                        {"key":"Environment", "value":"dev"}
-                                                        ]
+                                                    tags=tagging
                                                     )
         logging.info(f"Bedrock batch inference job successfully created. Job name: {job_name}")
 
