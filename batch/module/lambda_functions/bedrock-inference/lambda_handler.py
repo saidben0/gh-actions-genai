@@ -195,8 +195,17 @@ def lambda_handler(event, context):
                                                     jobName=job_name,
                                                     inputDataConfig=inputDataConfig,
                                                     outputDataConfig=outputDataConfig,
-                                                    timeoutDurationInHours=72
-                                                )
+                                                    timeoutDurationInHours=72,
+                                                    tags=[
+                                                        {"key":"Team", "value":"Tech-Land-Manufacturing@enverus.com"},
+                                                        {"key":"Dataset", "value":"land"},
+                                                        {"key":"SourceCode", "value":"https://github.com/enverus-ea/land.llandman"},
+                                                        {"key":"Component", "value":"llandman"},
+                                                        {"key":"BusinessUnit", "value":"ea"},
+                                                        {"key":"Product", "value":"courthouse"},
+                                                        {"key":"Environment", "value":"dev"}
+                                                        ]
+                                                    )
         logging.info(f"Bedrock batch inference job successfully created. Job name: {job_name}")
 
         job_arn = response.get('jobArn')
