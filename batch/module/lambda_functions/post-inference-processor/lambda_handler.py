@@ -86,7 +86,7 @@ def lambda_handler(event, context):
 
             for p in processes:
                 p.join()
-            
+           
             logging.info("Finish all inference processing.")
 
         except Exception as e:
