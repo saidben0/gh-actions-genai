@@ -9,17 +9,17 @@ The GitHub Actions CI/CD pipeline is composed of four Workflows:
 * Terraform Destroy workflow: that can be used to destroy the infrastructure of a given data pipeline
 
 ### Pre-requisites
-Create the below IAM Roles that require access to the new AWS account:
-* gh-oidc-dev-iam-role
+Create the below IAM Roles in the new AWS `prod` account:
+* gh-oidc-${env}-iam-role
 * lambda-${env}-exec-role
 
-From GitHub UI, create an environment (i.e- prod) then add the `IAM_ROLE_ARN` that the GitHub Actions must assume to have access to deploy the infrastructure into the `prod` environment.
+From GitHub UI, create an environment (i.e- `prod`) then add the `IAM_ROLE_ARN` that the GitHub Actions CI/CD pipeline must assume to to deploy the infrastructure into the `prod` environment.
 
 
 ### Example of deploying the data pipelines into a new AWS Account (new env)
 Let’s assume that you want to deploy the data pipelines into the production environment:
 
-Step#1: Add a new job into `lambda-layer.yml` workflow to publish the lambda layer into the new AWS account
+Step#1: Add a new job `prod-use1` into `lambda-layer.yml` workflow to publish the lambda layer
 
 ```yaml
 name: Lambda Layer Pipeline
@@ -51,7 +51,7 @@ jobs:
 
 Step#2: Push your changes into the repo and make sure the new lambda layer had been created in the AWS account
 
-Step#3: If everything is working as intended then merge yout changes into the default branch `main`
+Step#3: If everything is working as intended then merge your changes into the default branch `main`
 
 **The lambda layer must be deployed first because it is required by the lambda functions that are used by the Real-Time and Batch data pipeline.
 
@@ -93,7 +93,7 @@ provider "awscc" {
 }
 ```
  
-Step#5: Add a new job in Real-Time yaml workflow to deploy Real-Time data pipeline into the new env/AWS Account
+Step#5: Add a new job `prod-use1` in Real-Time yaml workflow to deploy Real-Time data pipeline into `prod` AWS Account
 ```yaml
 name: Real-Time Pipeline
 
@@ -172,7 +172,7 @@ provider "awscc" {
 }
 ```
 
-Step#8: Add a new job in Batch yaml workflow to deploy the Batch data pipeline into the new AWS Account
+Step#8: Add a new job `prod-use1` in Batch yaml workflow to deploy the Batch data pipeline into the `prod` AWS Account
 ```yaml
 name: Batch Pipeline
 
@@ -213,16 +213,3 @@ jobs:
 ```
 
 Step#9: push your changes to deploy the infrastructure that supports the Batch data pipeline
-
-
-
-
-
-
-## Publish New Lambda Layer Version
-You need to update the content of `lambda-layer/requirements.txt`, which will trigger:
-   1- `lambda-layer.yml` pipeline to call the re-usable workflow `publish-layer.yml`
-   2- Once `publish-layer.yml` pipeline execution is `completed`, it will trigger both `realtime` and `batch` data-pipeline workflows to update the layer version of their lambda functions
-
-*** Please note that in order for `realtime` and `batch` data-pipeline workflow to be triggered, the `lambda-layer.yml` pipeline file must referenced from the `default` git repo branch.
-
