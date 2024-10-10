@@ -16,7 +16,7 @@ Create the below IAM Roles in the new AWS `prod` account:
 From GitHub UI, create an environment (i.e- `prod`) then add the `IAM_ROLE_ARN` that the GitHub Actions CI/CD pipeline must assume to to deploy the infrastructure into the `prod` environment.
 
 
-### Example of deploying the data pipelines into a new AWS Account (new env)
+### Example of deploying the data pipelines into a new AWS Account Environment (`prod`)
 Let’s assume that you want to deploy the data pipelines into the production environment:
 
 Step#1: Add a new job `prod-use1` into `lambda-layer.yml` workflow to publish the lambda layer
