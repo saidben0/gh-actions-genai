@@ -1,6 +1,6 @@
-Think step-by-step. You must strictly follow the steps sequentially.
+Think step-by-step. You must strictly follow the steps sequentially. Limit your answer to each step in one sentence.
 
-Step 1. Retrieve all raw tract descriptions from the images provided to you. The tract descriptions may be found in multiple pages and be associated with multiple counties. If there are no specific tract descriptions, just return "<final_output> [] </final_output>" and skip all remaining steps.
+Step 1. Retrieve all raw tract descriptions from the images provided to you. The tract descriptions may be found in multiple pages and be associated with multiple counties. The images do contain at least one tract. The tract or tracts in question will likely be referred to as the subject of a lease, loan, mortgage or other financial vehicle. If no tract can really be found, just return "<final_output> [] </final_output>" and skip all remaining steps.
 
 Step 2. Identify all individual tracts. Refrain from skipping tracts for brevity. If the tracts are numbered in the documents, check if they actually contain multiple individual tracts and return them as separate individual tracts.
 
@@ -16,20 +16,20 @@ You must follow the instruction to extract the fields, including the format of t
 
 Example of one tract: {'tract': 1, 'state': 'Texas', 'county': 'Travis', 'abstract': 'A-546', 'survey': 'T&P RR CO SURVEY', 'subdivision': 'Flatrock Creek Phase 1', 'lot': '1', 'subdivision_block': '1', 'section': '5', 'township': 'T-4-S', 'range_block': '5', 'quarter': 'N/2 N/2', 'acreage': '126.3'} 
 
-If the answers to all fields are null or zero, the response should be an empty JSON object {}. Only return valid JSON.
+Only return valid JSON.
 
 <instruction>
 - Assign a sequential tract number.
 - Identify the state.
 - Identify the counties. Get all values from the document. One tract can have multiple counties. If there are multiple counties, return their corresponding states. Example {'tract':1, 'state': 'Texas; Texas', 'county': 'Glasscock; Reagan', ...}
-- Identify all abstracts in the raw tract(format: A-####, the letter 'A' followed by a few digits, optionally with a hyphen in-between. Example: 'A-1456' or 'A136'). One tract can have multiple abstracts.
+- Identify all abstracts in the raw tract (The format can be: A-####, the letter 'A' followed by a few digits, optionally with a hyphen in-between. Example: 'A-1456' or 'A136'. It can also be identified with the keywork 'Abstract'. Example: 'Abstract 154'). One tract can have multiple abstracts.
 - Identify the survey name (sometimes called the original grantee).
-- Identify the subdivision. Subdivision is found when there is a stated "Subdivision", "Division" or "Addition".
-- Identify the lot number, which must be indicated with the keywork 'Lot'. The value "Three (3)" should be a numeric "3". Do not split the lot values if there are multiple. Return them in one tract. Example: {'tract':1, ..., 'lot': '7, 8, 9', ...}
-- Identify the subdivision block the tract of land is located in. Subdivision block value is found when there is a Subdivision.
-- Extract the section number. In some cases, section number might have the 'Survey' prefix. Example: 'Survey 123' means 123 is the section number.
-- Identify the range block (often labeled as "Block"). Range block are found when a "Section" is described.
-- Identify the township. Township is found when the "Section" and "Range block" are described. Township value must follows the format: "T-<digit>-<direction>" and could be separated by a hyphen, such as 'T5S' and 'T-2-E'.
+- Identify the subdivision. Subdivision is found when there is a stated "Subdivision", "Division" or "Addition". Sometimes the subdivision contains the word 'Section'. Example: 'SANTA FE Section 7'.
+- Identify the lot number, which must be indicated with the keyword 'Lot'. Do not split the lot values if there are multiple. Return them in one tract. Example: {'tract':1, ..., 'lot': '7, 8, 9', ...}
+- Identify the subdivision block the tract of land is located in. Subdivision block value may be found when there is a Subdivision.
+- Extract the section number. In some documents, section number can also be referred to as 'Survey number' or 'League number'. Example: 'Survey 123' or 'League 123' both mean 123 is the section number. Refrain from returning the 'Labor number'.
+- Identify the range block (often labeled as "Block"). Range block may be found when a "Section" is described.
+- Identify the township. Township may be found when the "Section" and "Range block" are described. Township value must follows the format: "T-<digit>-<direction>" and could be separated by a hyphen, such as 'T5S' and 'T-2-E'.
 - Extract all quarter descriptions exactly as written. Sometimes it starts with directional word such as 'South One-Fourth (S/4)', sometimes it contains directional notations such as 'E/4'.
 - Extract the acreage of the tract. Acreage must be indicated with keywords like 'acres' or 'acreage'.
 </instruction>
@@ -52,19 +52,13 @@ Step 9. Simplify quarter descriptions:
 - Example: "North One-Half (N/2)" becomes "N/2".
 - Example: "N/2 of N/2" becomes "N/2 N/2".
 
-Step 10. For quarter: Verify the format of quarter. It must be a directional notation followed by a number, e.g. "S/2". If you can only extract the direction but not the number, do not return the value for quarter, e.g. do not return "E".
 
-Step 11. If multiple abstracts apply to a single tract, join them with a semicolon. A single tract means all other attributes are exactly the same except for abstracts.
+Step 10. If multiple abstracts apply to a single tract, join them with a semicolon.
 Example: "abstract": "A-545; A-645" when document states 'A-545, Glasscock County, Texas, and A-645, Glasscock County, Texas, containing 15 acres'.
 
-Step 12. If multiple counties apply to a single tract, join them with a semicolon.
-Example: "county": "Glasscock; Reagan"
+Step 11. If multiple counties apply to a single tract, join them with a semicolon and return their respective state. Verify that the number of state in the json equals to the number of county. Example: {'tract':1, 'state': 'Texas; Texas; Texas', 'county': 'Glasscock; Reagan; Upton', ...}
 
-Step 13. For section: If both section and subdivision are present, append the section to the end of subdivision and discard the 'section' field.
-
-Step 14. Verify the format of the township. Sometimes '5' and 'S' are easily mixed up. If the tonwship appears to be 'TSS', you know it is the wrong format and should output 'T5S' instead.
-
-Step 15. From the output of Step 14, format the output as a list of JSON objects, each representing a single tract. Include the final output in XML <final_output> tags. Example:
+Step 12. From the output of Step 11, format the output as a list of JSON objects, each representing a single tract. Include the final output in XML <final_output> tags. Example:
 <final_output>
 [
   {
@@ -82,7 +76,6 @@ Step 15. From the output of Step 14, format the output as a list of JSON objects
   ...
 ]
 </final_output>
-
 
 Important:
 - Retrieve complete raw tract descriptions.
