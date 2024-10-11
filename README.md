@@ -2,25 +2,37 @@
 
 ## Deployments Automation with GitHub Actions CI/CD Pipeline
 
-The GitHub Actions CI/CD pipeline is composed of four Workflows:
-* Publish Lambda Layer workflow: to deploy the python libraries that support both Real-Time and Batch data pipeline.
-* Real-Time data pipeline workflow: deploys the infrastructure that supports the Real-Time data pipeline
-* Batch data pipeline workflow: deploys the infrastructure that supports the Batch data pipeline
-* Terraform Destroy workflow: that can be used to destroy the infrastructure of a given data pipeline
+The GitHub Actions CI/CD pipeline for this project consists of four separate workflows:
 
+1. Publish Lambda Layer Workflow: this workflow is responsible for deploying the Python libraries that support both the Real-Time and Batch data pipelines.
+
+2. Real-Time Data Pipeline Workflow: this workflow deploys the infrastructure required to support the Real-Time data pipeline.
+
+3. Batch Data Pipeline Workflow: this workflow deploys the infrastructure required to support the Batch data pipeline. 
+
+4. Terraform Destroy Workflow: this workflow can be used to destroy the infrastructure of a given data pipeline, whether that's the Real-Time or Batch pipeline.
+
+The pipeline uses these four distinct workflows to manage the deployment and management of the different components that make up the overall data pipeline system.
+
+
+## Deploy the data pipelines into a new AWS Account Environment (`prod`)
+The best way to explain how to deploy the data pipelines into a new environment is by example.
+
+Let’s assume that you want to deploy the data pipelines into the production environment.
 ### Pre-requisites
-Create the below IAM Roles in the new AWS `prod` account:
-* gh-oidc-${env}-iam-role
-* lambda-${env}-exec-role
+- Create the below IAM Roles in the new AWS `prod` account:
+  - `gh-oidc-${env}-iam-role`: assumed by the GitHub Actions CI/CD pipeline to deploy into the new AWS environment
+  - `lambda-${env}-exec-role`: assumed by the AWS Lambda functions that are deployed as part of the data pipelines infrastructure. 
 
-From GitHub UI, create an environment (i.e- `prod`) then add the `IAM_ROLE_ARN` that the GitHub Actions CI/CD pipeline must assume to to deploy the infrastructure into the `prod` environment.
+- From GitHub UI:
+  - Create the new environment that you want to deploy into (i.e- `prod`)
+  - Add the `IAM_ROLE_ARN` that the GitHub Actions CI/CD pipeline must assume to deploy the infrastructure into the new AWS environment (i.e- `prod`).
 
 
-### Example of deploying the data pipelines into a new AWS Account Environment (`prod`)
-Let’s assume that you want to deploy the data pipelines into the production environment:
+#### Step#1: Publish the lambda layer
+This lambda layer contains the python libraries that are shared across the lambda functions of this solution.
 
-Step#1: Add a new job `prod-use1` into `lambda-layer.yml` workflow to publish the lambda layer
-
+- Add a new job `prod-use1` into `lambda-layer.yml` workflow:
 ```yaml
 name: Lambda Layer Pipeline
 
@@ -49,13 +61,20 @@ jobs:
      aws-region: us-east-1
 ```
 
-Step#2: Push your changes into the repo and make sure the new lambda layer had been created in the AWS account
+- Update `lambda-layer/requirements.txt` file
+`Lambda Layer Pipeline` runs when `lambda-layer/requirements.txt` is updated.
+You can just add a whitespace to the end of the file abd that should the `Lambda Layer Pipeline` to run an deploy the lambda layer into the AWS environment.
 
-Step#3: If everything is working as intended then merge your changes into the default branch `main`
+- Push your changes into the repo and make sure the new lambda layer had been created in the new AWS account/env
+The lambda layer must be deployed first because it is required by the lambda functions that are used by the Real-Time and Batch data pipeline.
 
-**The lambda layer must be deployed first because it is required by the lambda functions that are used by the Real-Time and Batch data pipeline.
+- Merge your changes into the default branch `main`
 
-Step#4: Under `realtime` directory, clone `dev-use1` then rename the copied directory to `prod-use1`
+
+#### Step#2: Deploy Real-Time Data Pipeline
+Adding a new job to deploy the Real-Time data pipeline to the new AWS environment.
+
+- Under `realtime` directory, clone `dev-use1` then rename the copied directory to `prod-use1`
 
 In `prod-dev1` directory, update `backend.tf` and `providers.tf` accordingly so that it uses the correct backend and the correct aws providers:
 
@@ -92,8 +111,8 @@ provider "awscc" {
   region = "us-east-1"
 }
 ```
- 
-Step#5: Add a new job `prod-use1` in Real-Time yaml workflow to deploy Real-Time data pipeline into `prod` AWS Account
+
+- Add a new job `prod-use1` in Real-Time yaml workflow to deploy Real-Time data pipeline into `prod` AWS Account
 ```yaml
 name: Real-Time Pipeline
 
@@ -133,9 +152,12 @@ jobs:
      deploy: 'true'
 ```
 
-Step#6: push your changes to deploy the infrastructure that supports the Real-Time data pipeline
+- Push your changes to deploy the infrastructure that supports the Real-Time data pipeline
 
-Step#7: Under `batch` directory, clone `dev-use1` then rename the copied directory to `prod-use1`
+#### Step#3: Deploy Batch Data Pipeline
+Adding a new job to deploy the Batch data pipeline to the new AWS environment.
+
+- Under `batch` directory, clone `dev-use1` then rename the copied directory to `prod-use1`
 In `prod-dev1` directory, update `backend.tf` and `providers.tf` accordingly so that it uses the correct backend and the correct aws providers:
 
 ```bash
@@ -172,7 +194,7 @@ provider "awscc" {
 }
 ```
 
-Step#8: Add a new job `prod-use1` in Batch yaml workflow to deploy the Batch data pipeline into the `prod` AWS Account
+- Add a new job `prod-use1` in Batch yaml workflow to deploy the Batch data pipeline into the `prod` AWS Account
 ```yaml
 name: Batch Pipeline
 
@@ -212,4 +234,4 @@ jobs:
      deploy: 'true'
 ```
 
-Step#9: push your changes to deploy the infrastructure that supports the Batch data pipeline
+- Push your changes to deploy the infrastructure that supports the Batch data pipeline
