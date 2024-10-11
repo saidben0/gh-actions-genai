@@ -63,7 +63,7 @@ jobs:
 
 - Update `lambda-layer/requirements.txt` file
 `Lambda Layer Pipeline` runs when `lambda-layer/requirements.txt` is updated.
-You can just add a whitespace to the end of the file abd that should the `Lambda Layer Pipeline` to run an deploy the lambda layer into the AWS environment.
+You can just add a whitespace to the end of the file and that should trigger the `Lambda Layer Pipeline` to run an deploy the lambda layer into the AWS environment.
 
 - Push your changes into the repo and make sure the new lambda layer had been created in the new AWS account/env
 The lambda layer must be deployed first because it is required by the lambda functions that are used by the Real-Time and Batch data pipeline.
