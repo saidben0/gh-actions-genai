@@ -240,7 +240,7 @@ jobs:
 ## `Terraform Destroy` workflow
 The `terraform destroy` workflow is configured to run manually to prevent accidental destruction of the infrastructure that supports the data pipelines.
 
-If `terraform destroy` is needed to be executed then the user needs to select the `Terraform Destroy` workflow from the GitHub Actions UI then enter the required workflow inputs before it can be executed.
+If `terraform destroy` is needed to be executed then the user needs to select/enter the `Terraform Destroy` workflow from the GitHub Actions UI then enter the required workflow inputs before it can be executed.
 ```yaml
     inputs:
       env:
