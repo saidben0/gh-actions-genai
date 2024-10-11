@@ -235,3 +235,45 @@ jobs:
 ```
 
 - Push your changes to deploy the infrastructure that supports the Batch data pipeline
+
+
+## `Terraform Destroy` workflow
+The `terraform destroy` workflow is configured to run manually to avoid pushing a change into the repo that triggers terraform the infrastructure that supports the data pipelines.
+
+If `terraform destroy` is needed to be executed then the user needs to select the `Terraform Destroy` workflow from the GitHub Actions UI then enter the required workflow inputs before it can be executed.
+```yaml
+    inputs:
+      env:
+        description: 'deployment environment'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - prod
+      data-pipeline:
+        required: true
+        default: 'batch'
+        type: choice
+        options:
+          - 'batch'
+          - 'realtime'
+      aws-env-dir:
+        required: true
+        default: 'dev-use1'
+        type: choice
+        options:
+          - 'dev-use1'
+          - 'dev-usw2'
+      aws-region:
+        required: true
+        default: 'us-east-1'
+        type: choice
+        options:
+          - 'us-east-1'
+          - 'us-west-2'
+      lambda-role-name:
+        required: true
+        default: 'llandman-dev-lambda-exec-role'
+        type: string
+```
