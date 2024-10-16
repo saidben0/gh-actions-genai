@@ -74,11 +74,6 @@ def lambda_handler(event, context):
     model_output_arr_chunks = [model_output_arr[i:i + chunk_size] for i in range(0, len(model_output_arr), chunk_size)]
     logging.info(f"There are {len(model_output_arr)} records in the Bedrock inference job output. Dividing them into {len(model_output_arr_chunks)} chunks for parallel processing. ")
 
-    #TODO: Delete
-    if job_id != "wbb7fn92t9jl":
-        dynamodb_table_name = "aws-proserve-land-doc"
-        logging.info(f"Saving moodel output to {dynamodb_table_name}")
-
     with Manager() as manager:
         try:
             msg_attributes_dict = manager.dict(msg_attributes)
