@@ -77,7 +77,7 @@ def prepare_model_inputs(bytes_inputs: list[bytes], prompt: Prompt, system_promp
         #                                "data": one_page_data}})
         # page_count += 1
         
-    final_text = f"{prompt.text} {bytes_inputs}"
+    final_text = f"{prompt.text} <document> {bytes_inputs}</document>"
     content_input.append({"type": "text", "text": final_text})
 
     model_input = {
