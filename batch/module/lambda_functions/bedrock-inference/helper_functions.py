@@ -58,45 +58,47 @@ def prepare_model_inputs(bytes_inputs: list[bytes], prompt: Prompt, system_promp
     max_tokens = 4096
     anthropic_version = "bedrock-2023-05-31"
 
-    ### Split the data into chunks of 20 pages
-    grouped_bytes_input = [bytes_inputs[i:i+20] for i in range(0, len(bytes_inputs), 20)]
+    # ### Split the data into chunks of 20 pages
+    # grouped_bytes_input = [bytes_inputs[i:i+20] for i in range(0, len(bytes_inputs), 20)]
 
-    chunk_count = len(grouped_bytes_input)
+    # chunk_count = len(grouped_bytes_input)
+    chunk_count = 1
 
     model_inputs = []
 
-    for i, bytes_input in enumerate(grouped_bytes_input):
-        page_count = 1
-        content_input = []
-        for one_page_data in bytes_input:
-            content_input.append({"type": "text", "text": f"Image {page_count}"})
-            content_input.append({"type": "image",
-                                 "source": {"type": "base64",
-                                           "media_type": "image/png",
-                                           "data": one_page_data}})
-            page_count += 1
+    # for i, bytes_input in enumerate(grouped_bytes_input):
+        # page_count = 1
+    content_input = []
+    # for one_page_data in bytes_input:
+        # content_input.append({"type": "text", "text": f"Image {page_count}"})
+        # content_input.append({"type": "image",
+        #                      "source": {"type": "base64",
+        #                                "media_type": "image/png",
+        #                                "data": one_page_data}})
+        # page_count += 1
+        
+    final_text = f"{prompt.text} {bytes_inputs}"
+    content_input.append({"type": "text", "text": final_text})
 
-        content_input.append({"type": "text", "text": prompt.text})
+    model_input = {
+        "anthropic_version": anthropic_version,
+        "temperature": temperature,
+        "top_p": top_p,
+        "max_tokens": max_tokens,
+        "messages": [
+            {
+                "role": "user",
+                "content": content_input,
+            }
+        ]}
 
-        model_input = {
-            "anthropic_version": anthropic_version,
-            "temperature": temperature,
-            "top_p": top_p,
-            "max_tokens": max_tokens,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": content_input,
-                }
-            ]}
+    if system_prompt.identifier:
+        model_input["system"] = system_prompt.text
 
-        if system_prompt.identifier:
-            model_input["system"] = system_prompt.text
+    final_json = {"recordId": "1".zfill(11),
+                    "modelInput": model_input}
 
-        final_json = {"recordId": f"{i+1}".zfill(11),
-                      "modelInput": model_input}
-
-        model_inputs.append(final_json)
+    model_inputs.append(final_json)
 
     return model_inputs, chunk_count
 
@@ -173,12 +175,18 @@ def parallel_enabled(array: list[str], metadata_dict: dict, prompts: dict, dest_
         except Exception as e:
             logging.info(f"Error retrieving document thus skipping: {s3_key} - {e}")
             continue
-    
+
         try:
-            bytes_inputs = convertS3Pdf(mime, body)
+            bytes_inputs = body.read()
         except Exception as e:
-            logging.info(f"Error conversting document thus skipping: {s3_key} - {e}")
+            logging.info(f"Error reading txt file thus skipping: {s3_key} - {e}")
             continue
+    
+        # try:
+        #     bytes_inputs = convertS3Pdf(mime, body)
+        # except Exception as e:
+        #     logging.info(f"Error conversting document thus skipping: {s3_key} - {e}")
+        #     continue
 
         prompt = Prompt(
             identifier = metadata_dict[file_id]["prompt_id"],
