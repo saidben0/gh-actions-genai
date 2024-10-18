@@ -31,12 +31,16 @@ class Prompt():
         self.ver = ver
         self.text = text
 
-def prepare_model_inputs(bytes_inputs: list[bytes], prompt: Prompt, system_prompt: Prompt) -> tuple[list, int]:
+
+def prepare_model_inputs(input_file_type: str, bytes_inputs: list[bytes], prompt: Prompt, system_prompt: Prompt) -> tuple[list, int]:
     """
     Prepare the data to the required format for Bedrock batch inference.
 
     Parameters:
     ----------
+    input_file_type : string
+        Whether the file data comes from pdf or txt
+
     bytes_inputs : list[bytes]
         A list containing the data, in bytes, for each page of the PDF.
 
@@ -53,52 +57,80 @@ def prepare_model_inputs(bytes_inputs: list[bytes], prompt: Prompt, system_promp
         - A list of formatted dictionaries to send to Bedrock batch inference job
         - An integer of the total number of formatted dictionaries. This is used as the total number of chunks in a PDF.
     """
+
     temperature = 0
     top_p = 0.1
     max_tokens = 4096
     anthropic_version = "bedrock-2023-05-31"
 
-    # ### Split the data into chunks of 20 pages
-    # grouped_bytes_input = [bytes_inputs[i:i+20] for i in range(0, len(bytes_inputs), 20)]
-
-    # chunk_count = len(grouped_bytes_input)
-    chunk_count = 1
-
+    # list to store all JSON object in the final jsonl file
     model_inputs = []
 
-    # for i, bytes_input in enumerate(grouped_bytes_input):
-        # page_count = 1
-    content_input = []
-    # for one_page_data in bytes_input:
-        # content_input.append({"type": "text", "text": f"Image {page_count}"})
-        # content_input.append({"type": "image",
-        #                      "source": {"type": "base64",
-        #                                "media_type": "image/png",
-        #                                "data": one_page_data}})
-        # page_count += 1
+    if input_file_type == 'pdf':
+        ### Split the data into chunks of 20 pages
+        grouped_bytes_input = [bytes_inputs[i:i+20] for i in range(0, len(bytes_inputs), 20)]
+
+        chunk_count = len(grouped_bytes_input)
+
+        for i, bytes_input in enumerate(grouped_bytes_input):
+            page_count = 1
+            content_input = []
+            for one_page_data in bytes_input:
+                content_input.append({"type": "text", "text": f"Image {page_count}"})
+                content_input.append({"type": "image",
+                                    "source": {"type": "base64",
+                                            "media_type": "image/png",
+                                            "data": one_page_data}})
+                page_count += 1
+
+            content_input.append({"type": "text", "text": prompt.text})
+
+            model_input = {
+                "anthropic_version": anthropic_version,
+                "temperature": temperature,
+                "top_p": top_p,
+                "max_tokens": max_tokens,
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": content_input,
+                    }
+                ]}
+
+            if system_prompt.identifier:
+                model_input["system"] = system_prompt.text
+
+            final_json = {"recordId": f"{i+1}".zfill(11),
+                        "modelInput": model_input}
+
+            model_inputs.append(final_json)
+
+    else:
+        chunk_count = 1
         
-    final_text = f"{prompt.text} <document> {bytes_inputs}</document>"
-    content_input.append({"type": "text", "text": final_text})
+        content_input = []
+        final_text = f"{prompt.text} <document> {bytes_inputs}</document>"
+        content_input.append({"type": "text", "text": final_text})
 
-    model_input = {
-        "anthropic_version": anthropic_version,
-        "temperature": temperature,
-        "top_p": top_p,
-        "max_tokens": max_tokens,
-        "messages": [
-            {
-                "role": "user",
-                "content": content_input,
-            }
-        ]}
+        model_input = {
+            "anthropic_version": anthropic_version,
+            "temperature": temperature,
+            "top_p": top_p,
+            "max_tokens": max_tokens,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": content_input,
+                }
+            ]}
 
-    if system_prompt.identifier:
-        model_input["system"] = system_prompt.text
+        if system_prompt.identifier:
+            model_input["system"] = system_prompt.text
 
-    final_json = {"recordId": "1".zfill(11),
-                    "modelInput": model_input}
+        final_json = {"recordId": "1".zfill(11),
+                        "modelInput": model_input}
 
-    model_inputs.append(final_json)
+        model_inputs.append(final_json)
 
     return model_inputs, chunk_count
 
@@ -169,24 +201,29 @@ def parallel_enabled(array: list[str], metadata_dict: dict, prompts: dict, dest_
         bucket_name = f.split('/')[2]
         s3_key = f.split('/', 3)[3:][0]
         file_id = f.split('/')[-1].split('.')[0]
+        input_file_type = s3_key.split('.')[-1]
 
         try:
-            mime, body = retrievePdf(bucket_name, s3_key)
+            mime, body = retrieveS3File(bucket_name, s3_key)
         except Exception as e:
             logging.info(f"Error retrieving document thus skipping: {s3_key} - {e}")
             continue
 
-        try:
-            bytes_inputs = body.read()
-        except Exception as e:
-            logging.info(f"Error reading txt file thus skipping: {s3_key} - {e}")
-            continue
+        if input_file_type == 'pdf':
+            try:
+                bytes_inputs = convertS3Pdf(mime, body)
+            except Exception as e:
+                logging.info(f"Error conversting document thus skipping: {s3_key} - {e}")
+                continue
+        
+        else:
+            try:
+                bytes_inputs = body.read()
+            except Exception as e:
+                logging.info(f"Error reading txt file thus skipping: {s3_key} - {e}")
+                continue
     
-        # try:
-        #     bytes_inputs = convertS3Pdf(mime, body)
-        # except Exception as e:
-        #     logging.info(f"Error conversting document thus skipping: {s3_key} - {e}")
-        #     continue
+
 
         prompt = Prompt(
             identifier = metadata_dict[file_id]["prompt_id"],
@@ -301,7 +338,7 @@ def add_prompt_if_missing(prompts: dict, prompt_id: str, prompt_ver: str):
     return prompts
             
 
-def retrievePdf(bucket: str , s3_key: str) -> tuple[str, StreamingBody]:
+def retrieveS3File(bucket: str , s3_key: str) -> tuple[str, StreamingBody]:
     """
     Retrieve data of a file from an S3 bucket.
 

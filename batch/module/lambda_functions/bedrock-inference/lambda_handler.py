@@ -95,6 +95,13 @@ def lambda_handler(event, context):
                             prompt_ver = message_attributes.get('prompt_version', {}).get('StringValue', None)
                             system_prompt_id = message_attributes.get('system_prompt_id', {}).get('StringValue', None)
                             system_prompt_ver = message_attributes.get('system_prompt_version', {}).get('StringValue', None)
+                            input_file_type = s3_loc.split('.')[-1]
+
+
+                            # Check if the file on S3 is a pdf or txt
+                            if input_file_type not in ['pdf', 'txt']:
+                                logging.info(f"The s3_location attribute in the SQS message {sqs_message_id} must end with .pdf or .txt. Skipping this SQS message.")
+                                continue
 
                             msg_attributes[file_id] = {
                                 "sqs_message_id": sqs_message_id,
@@ -102,7 +109,8 @@ def lambda_handler(event, context):
                                 "prompt_ver": prompt_ver,
                                 "system_prompt_id": system_prompt_id,
                                 "system_prompt_ver": system_prompt_ver,
-                                "project_name": project_name
+                                "project_name": project_name,
+                                "input_file_type": input_file_type
                                 }
 
                             model_count[model_id] = model_count.get(model_id, 0) + 1
@@ -138,6 +146,8 @@ def lambda_handler(event, context):
     
     logging.info("Finish reading SQS messages.")
     
+    logging.info(f"Total number of files to be processed: {len(doc_arr)}")
+
     logging.info("Start processing data.")
     
     # Divide the doc_arr into chunks of 200 so that multiprocessing would not create too many connections

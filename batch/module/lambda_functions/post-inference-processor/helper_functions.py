@@ -32,7 +32,7 @@ class Prompt():
         self.ver = ver
         self.text = text
         
-def update_ddb_table(table_name: str, project_name: str, sqs_message_id: str, file_id: str, current_time: str, prompt: Prompt, system_prompt: Prompt, model_id: str, chunk_count: int, chunk_id: int, exception:str =None, model_response: dict =None):
+def update_ddb_table(table_name: str, project_name: str, sqs_message_id: str, file_id: str, current_time: str, prompt: Prompt, system_prompt: Prompt, model_id: str, chunk_count: int, chunk_id: int, input_file_type: str, exception:str =None, model_response: dict =None):
     """
     Save the model response to a DynamoDB Table.
 
@@ -67,6 +67,9 @@ def update_ddb_table(table_name: str, project_name: str, sqs_message_id: str, fi
 
     chunk_id : int
         The ID of the chunk (containing 20-page worth of data) that has been processed.
+
+    input_file_type : str
+        The input data (pdf or txt) for the document.
 
     exception : str, optional
         The exception message if the LLM call fails.
@@ -110,6 +113,7 @@ def update_ddb_table(table_name: str, project_name: str, sqs_message_id: str, fi
                 "exception_FLAG": {"BOOL": flag_status},
                 "prompt_id": {"S": prompt_id},
                 "model_id": {"S": model_id},
+                "input_file_type": {"S": input_file_type},
                 "inference_mode": {"S": "batch"}
             }
     else:
@@ -126,6 +130,7 @@ def update_ddb_table(table_name: str, project_name: str, sqs_message_id: str, fi
             "exception_FLAG": {"BOOL": flag_status},
             "prompt_id": {"S": prompt_id},
             "model_id": {"S": model_id},
+            "input_file_type": {"S": input_file_type},
             "inference_mode": {"S": "batch"}
         }
 
@@ -157,6 +162,7 @@ def parallel_enabled(array, metadata_dict, dynamodb_table_name, model_id):
             system_prompt_ver = metadata_dict[file_id]['system_prompt_ver']
             chunk_count = metadata_dict[file_id]['chunk_count']
             project_name = metadata_dict[file_id]['project_name']
+            input_file_type = metadata_dict[file_id]['input_file_type']
 
         except KeyError:
             logging.error(f"Error retrieving the sqs msg attributes for {file_id}. Please check the metadata.json to make sure all the required sqs msg attributes are present.")
@@ -187,9 +193,9 @@ def parallel_enabled(array, metadata_dict, dynamodb_table_name, model_id):
             output_item = json.loads(line.decode('utf-8'))  # Decode and parse JSON object
             try:
                 if 'modelOutput' in output_item:
-                    update_ddb_table(dynamodb_table_name, project_name, sqs_message_id, file_id, ingestion_time, prompt, system_prompt, model_id, chunk_count, chunk_num, model_response=output_item['modelOutput'])
+                    update_ddb_table(dynamodb_table_name, project_name, sqs_message_id, file_id, ingestion_time, prompt, system_prompt, model_id, chunk_count, chunk_num, input_file_type, model_response=output_item['modelOutput'])
                 else:
-                    update_ddb_table(dynamodb_table_name, project_name, sqs_message_id, file_id, ingestion_time, prompt, system_prompt, model_id, chunk_count, chunk_num, exception=output_item['error'])
+                    update_ddb_table(dynamodb_table_name, project_name, sqs_message_id, file_id, ingestion_time, prompt, system_prompt, model_id, chunk_count, chunk_num, input_file_type, exception=output_item['error'])
             except Exception as e:
                 logging.error(f"Error saving the {file_id} chunk {chunk_num} model output to DynamoDB table: {e}")
                 continue

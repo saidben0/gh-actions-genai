@@ -11,7 +11,7 @@ with  open('../realtime/module/templates/prompt_template.txt', 'r') as f:
 with  open('../realtime/module/templates/system_prompt_template.txt', 'r') as f:
     SYSTEM_PROMPT = f.read()
 
-def retrievePdf(bucket: str , s3_key: str) -> tuple[str, StreamingBody]:
+def retrieveS3File(bucket: str , s3_key: str) -> tuple[str, StreamingBody]:
     """
     Retrieve data of a file from an S3 bucket.
 
@@ -80,7 +80,7 @@ def get_llm_output(prompt, system_prompt=None):
 	bucket_name = 'xxxxxxxx'	# TODO: specify bucket that contains the test PDF
 	s3_key = 'xxxxxxxx'		# TODO: specify the key to the test PDF
 
-	mime, body = retrievePdf(bucket_name, s3_key)
+	mime, body = retrieveS3File(bucket_name, s3_key)
 	bytes_inputs = convertS3Pdf(mime, body)
 
 	##### Construct message #####
