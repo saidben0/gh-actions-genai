@@ -31,7 +31,7 @@ class Prompt():
         self.ver = ver
         self.text = text
 		
-def retrievePdf(bucket: str , s3_key: str) -> tuple[str, StreamingBody]:
+def retrieveS3File(bucket: str , s3_key: str) -> tuple[str, StreamingBody]:
     """
     Retrieve data of a file from an S3 bucket.
 
@@ -108,7 +108,7 @@ def convertPdf(file_path: str) -> list[bytes]:
         bytes_outputs.append(pdfbytes)
     return bytes_outputs
 
-def update_ddb_table(table_name: str, project_name: str, sqs_message_id: str, file_id: str, current_time: str, prompt: Prompt, system_prompt: Prompt, model_id: str, chunk_count: int, chunk_id: int, exception:str =None, model_response: dict =None):
+def update_ddb_table(table_name: str, project_name: str, sqs_message_id: str, file_id: str, current_time: str, prompt: Prompt, system_prompt: Prompt, model_id: str, chunk_count: int, chunk_id: int, input_file_type: str, exception:str =None, model_response: dict =None):
     """
     Save the model response to a DynamoDB Table.
 
@@ -143,6 +143,9 @@ def update_ddb_table(table_name: str, project_name: str, sqs_message_id: str, fi
 
     chunk_id : int
         The ID of the chunk (containing 20-page worth of data) that has been processed.
+    
+    input_file_type : str
+        The input data (pdf or txt) for the document.
 
     exception : str, optional
         The exception message if the LLM call fails.
@@ -189,6 +192,7 @@ def update_ddb_table(table_name: str, project_name: str, sqs_message_id: str, fi
                 "exception_FLAG": {"BOOL": flag_status},
                 "prompt_id": {"S": prompt_id},
                 "model_id": {"S": model_id},
+                "input_file_type": {"S": input_file_type},
                 "inference_mode": {"S": 'on demand'}
             }
     else:
@@ -204,6 +208,7 @@ def update_ddb_table(table_name: str, project_name: str, sqs_message_id: str, fi
             "exception_FLAG": {"BOOL": flag_status},
             "prompt_id": {"S": prompt_id},
             "model_id": {"S": model_id},
+            "input_file_type": {"S": input_file_type},
             "inference_mode": {"S": 'on demand'}
         }
 
@@ -243,15 +248,18 @@ def retrieve_bedrock_prompt(prompt_id: str, prompt_ver: str):
 
     return prompt, prompt_ver
 
-def call_llm(bytes_inputs: list[bytes], model_id: str, prompt: Prompt, system_prompt: Prompt =None) -> dict:
+def call_llm(bytes_inputs: list[bytes], input_file_type: str, model_id: str, prompt: Prompt, system_prompt: Prompt =None) -> dict:
     """
     Construct an input to call the LLM using the boto3 Bedrock runtime converse API.
 
     Parameters:
     ----------
     bytes_inputs : list[bytes]
-        A list of bytes containing data for each page in the PDF document.
+        A list of bytes containing data for each page in the PDF document. Or if it is from a txt file, a list containing all the text in a string.
 
+    input_file_type : str
+        The input data (pdf or txt) for the document.
+    
     model_id : str
         The ID of the model to be used in Bedrock.
 
@@ -273,17 +281,29 @@ def call_llm(bytes_inputs: list[bytes], model_id: str, prompt: Prompt, system_pr
     top_p = 0.1
 
     content_input = []
-    for bytes_input in bytes_inputs:
-        content_input.append({"image": {"format": "png", "source": {"bytes": bytes_input}}})
 
-    content_input.append({"text": prompt.text})
+    if input_file_type == 'pdf':
+        for bytes_input in bytes_inputs:
+            content_input.append({"image": {"format": "png", "source": {"bytes": bytes_input}}})
 
-    messages = [
-        {
-            "role": "user",
-            "content": content_input,
-        }
-    ]
+        content_input.append({"text": prompt.text})
+
+        messages = [
+            {
+                "role": "user",
+                "content": content_input,
+            }
+        ]
+    else:
+        final_text = f"{prompt.text} <document> {bytes_inputs[0]}</document>"
+        content_input.append({"text": final_text})
+
+        messages = [
+            {
+                "role": "user",
+                "content": content_input,
+            }
+        ]
 
     if system_prompt.identifier:
         response = bedrock_runtime.converse(

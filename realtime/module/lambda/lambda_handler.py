@@ -8,6 +8,7 @@ from helper_functions import *
 from typing import Optional
 import math
 import os
+import sys
 
 # Logger information
 logger = logging.getLogger()
@@ -26,7 +27,13 @@ def lambda_handler(event, context):
         s3_loc = message_attributes['s3_location']['stringValue']
         model_id = message_attributes['model_id']['stringValue']
         receipt_handle = message['receiptHandle']
+        input_file_type = s3_loc.split('.')[-1]
 
+        # Check if the file on S3 is a pdf or txt
+        if input_file_type not in ['pdf', 'txt']:
+            logging.info("The s3_location attribute in the SQS message must end with .pdf or .txt")
+            sys.exit(0)
+            
         prompt = Prompt(
             identifier = message_attributes['prompt_id']['stringValue'],
             ver = message_attributes.get('prompt_version', {}).get('stringValue', None)
@@ -53,22 +60,29 @@ def lambda_handler(event, context):
     try:
         logging.info(f"s3_key: {s3_key}")
         logging.info(f"Reading file {file_id} from bucket {bucket_name}")
-        mime, body = retrievePdf(bucket_name, s3_key)
+        mime, body = retrieveS3File(bucket_name, s3_key)
 
     except Exception as e:
         logging.error(f"Error getting file from S3: {e}")
         raise
+    
+    if input_file_type == 'pdf':
+        #################### Convert PDF to model input ####################
+        try:
+            logging.info(f"Converting PDF to byte: {file_id}")
+            bytes_inputs = convertS3Pdf(mime, body)
 
-    #################### Convert PDF to model input ####################
-    try:
-        logging.info(f"Converting PDF to byte: {file_id}")
-        bytes_inputs = convertS3Pdf(mime, body)
+            logging.info(f"Number of pages in the pdf: {len(bytes_inputs)}")
 
-        logging.info(f"Number of pages in the pdf: {len(bytes_inputs)}")
-
-    except Exception as e:
-        logging.error(f"Error reading the file: {e}")
-        raise
+        except Exception as e:
+            logging.error(f"Error reading the file: {e}")
+            raise
+    else:
+        try:
+            bytes_inputs = body.read()
+        except Exception as e:
+            logging.info(f"Error reading txt file thus skipping: {s3_key} - {e}")
+            raise
 
     #################### Retrieve Prompt from Bedrock ####################
     try:
@@ -89,34 +103,39 @@ def lambda_handler(event, context):
             raise
 
     #################### LLM call ####################
-    # Split the images to chunks of 20
-    if len(bytes_inputs) <= 20:
-        num_chunk = 1
-        logging.info(f"There are {len(bytes_inputs)} pages in the document. Processing all pages in one chunk.")
-    elif len(bytes_inputs) > 20:
-        num_chunk = math.ceil(len(bytes_inputs)/20)
-        logging.info(f"Splitting the images into {num_chunk} chunks...")
+    if input_file_type == 'pdf':
+        # Split the images to chunks of 20
+        if len(bytes_inputs) <= 20:
+            num_chunk = 1
+            logging.info(f"There are {len(bytes_inputs)} pages in the document. Processing all pages in one chunk.")
+        elif len(bytes_inputs) > 20:
+            num_chunk = math.ceil(len(bytes_inputs)/20)
+            logging.info(f"Splitting the images into {num_chunk} chunks...")
 
-    grouped_bytes_input = [bytes_inputs[i:i+20] for i in range(0, len(bytes_inputs), 20)]
+        grouped_bytes_input = [bytes_inputs[i:i+20] for i in range(0, len(bytes_inputs), 20)]
+    else:
+        grouped_bytes_input = [bytes_inputs]
+    
 
     exception_flag = False
 
     for i, byte_input in enumerate(grouped_bytes_input):
         logging.info(f"Extracting land description for chunk {i+1}...")
-        ingestion_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
 
         try:
-            model_response = call_llm(byte_input, model_id, prompt, system_prompt)
+            model_response = call_llm(byte_input, input_file_type, model_id, prompt, system_prompt)
 
         except Exception as e:
             logging.error(f"Error making LLM call: {e} Storing error details to DynamoDB Table: {table_name}")
-            update_ddb_table(table_name, project_name, sqs_message_id, file_id, ingestion_time, prompt, system_prompt, model_id, num_chunk, chunk_id=i+1, exception=e)
+            ingestion_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+            update_ddb_table(table_name, project_name, sqs_message_id, file_id, ingestion_time, prompt, system_prompt, model_id, num_chunk, chunk_id=i+1, input_file_type, exception=e)
             exception_flag = True
             continue
 
         try:
             logging.info(f"Storing results of chunk {i+1} to DynamoDB Table: {table_name}")
-            update_ddb_table(table_name, project_name, sqs_message_id, file_id, ingestion_time, prompt, system_prompt, model_id, num_chunk, chunk_id=i+1, model_response=model_response)
+            ingestion_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+            update_ddb_table(table_name, project_name, sqs_message_id, file_id, ingestion_time, prompt, system_prompt, model_id, num_chunk, chunk_id=i+1, input_file_type, model_response=model_response)
         except Exception as e:
             exception_flag = True
             logging.error(f"Error saving to DynamoDB table: {e}")

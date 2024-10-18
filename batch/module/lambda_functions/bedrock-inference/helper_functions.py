@@ -38,8 +38,8 @@ def prepare_model_inputs(input_file_type: str, bytes_inputs: list[bytes], prompt
 
     Parameters:
     ----------
-    input_file_type : string
-        Whether the file data comes from pdf or txt
+    input_file_type : str
+        The input data (pdf or txt) for the document.
 
     bytes_inputs : list[bytes]
         A list containing the data, in bytes, for each page of the PDF.
