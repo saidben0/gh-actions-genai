@@ -114,6 +114,7 @@ def lambda_handler(event, context):
 
         grouped_bytes_input = [bytes_inputs[i:i+20] for i in range(0, len(bytes_inputs), 20)]
     else:
+        num_chunk = 1
         grouped_bytes_input = [bytes_inputs]
     
 
