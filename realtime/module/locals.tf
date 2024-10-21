@@ -4,6 +4,8 @@ locals {
   region           = data.aws_region.this.name
   prompt_id        = awscc_bedrock_prompt.this["mainPrompt"].prompt_id
   system_prompt_id = awscc_bedrock_prompt.this["systemPrompt"].prompt_id
+  tesseract_prompt_id        = awscc_bedrock_prompt.this["tesseractMainPrompt"].prompt_id
+  tesseract_system_prompt_id        = awscc_bedrock_prompt.this["tesseractSystemPrompt"].prompt_id
 
   bedrock_prompts = {
     "mainPrompt" = {

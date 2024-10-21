@@ -46,6 +46,41 @@ resource "null_resource" "system_prompt_version_ssm_param" {
   depends_on = [awscc_bedrock_prompt.this]
 }
 
+resource "null_resource" "tesseract_main_prompt_version_ssm_param" {
+  provisioner "local-exec" {
+    command = <<EOT
+      VERSION_NUM=$(aws bedrock-agent create-prompt-version --prompt-identifier ${local.tesseract_prompt_id} | grep -i version | awk -F'"' '{print $4}')
+      aws ssm put-parameter \
+          --name "/${var.prefix}/${var.env}/bedrock/prompts/${local.tesseract_prompt_id}/versions/$VERSION_NUM" \
+          --type "String" \
+          --value "$VERSION_NUM" \
+          --overwrite || true
+    EOT
+  }
+
+  triggers = {
+    filebasesha = "${base64sha256(file("${path.module}/templates/tesseract_prompt_template.txt"))}"
+  }
+  depends_on = [awscc_bedrock_prompt.this]
+}
+
+resource "null_resource" "tesseract_system_prompt_version_ssm_param" {
+  provisioner "local-exec" {
+    command = <<EOT
+      VERSION_NUM=$(aws bedrock-agent create-prompt-version --prompt-identifier ${local.tesseract_system_prompt_id} | grep -i version | awk -F'"' '{print $4}')
+      aws ssm put-parameter \
+          --name "/${var.prefix}/${var.env}/bedrock/prompts/${local.tesseract_system_prompt_id}/versions/$VERSION_NUM" \
+          --type "String" \
+          --value "$VERSION_NUM" \
+          --overwrite || true
+    EOT
+  }
+
+  triggers = {
+    filebasesha = "${base64sha256(file("${path.module}/templates/tesseract_system_prompt_template.txt"))}"
+  }
+  depends_on = [awscc_bedrock_prompt.this]
+}
 
 resource "awscc_bedrock_prompt_version" "this" {
   for_each = local.bedrock_prompts
