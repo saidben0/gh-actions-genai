@@ -108,7 +108,7 @@ def convertPdf(file_path: str) -> list[bytes]:
         bytes_outputs.append(pdfbytes)
     return bytes_outputs
 
-def update_ddb_table(table_name: str, project_name: str, sqs_message_id: str, file_id: str, current_time: str, prompt: Prompt, system_prompt: Prompt, model_id: str, chunk_count: int, chunk_id: int, input_file_type: str, exception:str =None, model_response: dict =None):
+def update_ddb_table(table_name: str, project_name: str, sqs_message_id: str, file_id: str, current_time: str, prompt: Prompt, system_prompt: Prompt, model_id: str, input_file_type: str, chunk_count: int, chunk_id: int, exception:str =None, model_response: dict =None):
     """
     Save the model response to a DynamoDB Table.
 
@@ -137,6 +137,9 @@ def update_ddb_table(table_name: str, project_name: str, sqs_message_id: str, fi
     
     model_id : str
         The ID of the model used in Bedrock.
+    
+    input_file_type : str
+        The input data (pdf or txt) for the document.
 
     chunk_count : int
         The total number of chunk for the document.
@@ -144,8 +147,6 @@ def update_ddb_table(table_name: str, project_name: str, sqs_message_id: str, fi
     chunk_id : int
         The ID of the chunk (containing 20-page worth of data) that has been processed.
     
-    input_file_type : str
-        The input data (pdf or txt) for the document.
 
     exception : str, optional
         The exception message if the LLM call fails.

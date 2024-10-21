@@ -128,14 +128,14 @@ def lambda_handler(event, context):
         except Exception as e:
             logging.error(f"Error making LLM call: {e} Storing error details to DynamoDB Table: {table_name}")
             ingestion_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
-            update_ddb_table(table_name, project_name, sqs_message_id, file_id, ingestion_time, prompt, system_prompt, model_id, num_chunk, chunk_id=i+1, input_file_type, exception=e)
+            update_ddb_table(table_name, project_name, sqs_message_id, file_id, ingestion_time, prompt, system_prompt, model_id, input_file_type, num_chunk, chunk_id=i+1, exception=e)
             exception_flag = True
             continue
 
         try:
             logging.info(f"Storing results of chunk {i+1} to DynamoDB Table: {table_name}")
             ingestion_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
-            update_ddb_table(table_name, project_name, sqs_message_id, file_id, ingestion_time, prompt, system_prompt, model_id, num_chunk, chunk_id=i+1, input_file_type, model_response=model_response)
+            update_ddb_table(table_name, project_name, sqs_message_id, file_id, ingestion_time, prompt, system_prompt, model_id, input_file_type, num_chunk, chunk_id=i+1, model_response=model_response)
         except Exception as e:
             exception_flag = True
             logging.error(f"Error saving to DynamoDB table: {e}")
