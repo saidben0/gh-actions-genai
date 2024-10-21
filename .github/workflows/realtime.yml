@@ -22,7 +22,7 @@ jobs:
       aws-env-dir: dev-use1
       aws-region: us-east-1
       lambda-role-name: llandman-dev-lambda-exec-role
-      deploy: 'true' # must be set to 'true' to run `terraform apply` job
+      deploy: 'false' # must be set to 'true' to run `terraform apply` job
 
   
   # dev-usw2:
