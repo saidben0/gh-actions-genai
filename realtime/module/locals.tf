@@ -52,5 +52,51 @@ locals {
         }
       ]
     }
+    "tesseractMainPrompt" = {
+      default_variant = "variantOne"
+      name            = "${var.prefix}-${var.env}-tesseractMainPrompt"
+      variants = [
+        {
+          inference_configuration = {
+            text = {
+              temperature = 0
+              top_p       = 0.9000000000000000
+              max_tokens  = 300
+              top_k       = 250
+            }
+          }
+          name = "variantOne"
+          template_configuration = {
+            text = {
+              text = file("${path.module}/templates/tesseract_prompt_template.txt")
+            }
+          }
+          template_type = "TEXT"
+        }
+      ]
+    }
+    "tesseractSystemPrompt" = {
+      default_variant = "variantOne"
+      name            = "${var.prefix}-${var.env}-tesseractSystemPrompt"
+      variants = [
+        {
+          inference_configuration = {
+            text = {
+              temperature = 0
+              top_p       = 0.9000000000000000
+              max_tokens  = 300
+              top_k       = 250
+            }
+          }
+          name = "variantOne"
+          template_configuration = {
+            text = {
+              text = file("${path.module}/templates/tesseract_system_prompt_template.txt")
+            }
+          }
+          template_type = "TEXT"
+        }
+      ]
+    }
   }
 }
