@@ -244,7 +244,7 @@ def parallel_enabled(array: list[str], metadata_dict: dict, prompts: dict, dest_
 
         logging.info(f"Start processing data for {j} - {f}")
         try:
-            model_input_jsonl, chunk_count = prepare_model_inputs(bytes_inputs, prompt, system_prompt)
+            model_input_jsonl, chunk_count = prepare_model_inputs(input_file_type, bytes_inputs, prompt, system_prompt)
 
         except Exception as e:
             logging.error(f"Error creating model input: {e}")
@@ -329,6 +329,24 @@ def retrieve_bedrock_prompt(prompt_id: str, prompt_ver: str) -> str:
     return prompt
 
 def add_prompt_if_missing(prompts: dict, prompt_id: str, prompt_ver: str):
+    """
+    Add the prompt to the prompts dict if it is not already available.
+
+    Parameters: 
+    ----------
+    prompts : dict
+        The dictionary that stores all the required prompt version and prompt body.
+    prompt_id : str
+        The unique identifier or ARN of the prompt
+    prompt_ver : str
+        The version of the prompt
+    
+    Returns:
+    ----------
+    dict
+        The updated dictionary that contains the newly added prompt.
+
+    """
     if prompt_id not in prompts:
         prompts[prompt_id] = {}
 
@@ -371,6 +389,21 @@ def retrieveS3File(bucket: str , s3_key: str) -> tuple[str, StreamingBody]:
     return mime, body
 
 def delete_queue_messages(sqs, queue_url, queue_arr):
+    """
+    Delete an SQS message from the queue.
+
+    Parameters:
+    ----------
+    sqs : boto3 client
+        The SQS boto3 client
+
+    queue_url : str
+        The URL of the SQS queue.
+    
+    queue_arr : list
+        An array containing all the SQS message receipt handles.
+
+    """    
     logging.info(f"Deleting all SQS messages ")
     for i in range(0, len(queue_arr)):
         sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=queue_arr[i])
