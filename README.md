@@ -243,6 +243,14 @@ As an example, I am adding two new bedrock prompts named `tesseractMainPrompt` a
 
 ```hcl
 locals {
+  account_id                 = data.aws_caller_identity.this.account_id
+  partition                  = data.aws_partition.this.partition
+  region                     = data.aws_region.this.name
+  prompt_id                  = awscc_bedrock_prompt.this["mainPrompt"].prompt_id
+  system_prompt_id           = awscc_bedrock_prompt.this["systemPrompt"].prompt_id
+  tesseract_prompt_id        = awscc_bedrock_prompt.this["tesseractMainPrompt"].prompt_id
+  tesseract_system_prompt_id = awscc_bedrock_prompt.this["tesseractSystemPrompt"].prompt_id
+
   bedrock_prompts = {
     "mainPrompt" = {
       default_variant = "variantOne"
@@ -339,6 +347,10 @@ locals {
   }
 }
 ```
+**Make sure the new prompts are pointing to their associated template file
+- `text = file("${path.module}/templates/tesseract_prompt_template.txt")`
+- `text = file("${path.module}/templates/tesseract_system_prompt_template.txt")`
+
 Once the two items had been added to the local variable then you need to commit and push the code into the repo, this should trigger the `Real-Time` pipeline to run and deploy the newly added Bedrock prompts.
 
 
