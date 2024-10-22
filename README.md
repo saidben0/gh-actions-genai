@@ -237,9 +237,9 @@ jobs:
 - Push your changes to deploy the infrastructure that supports the Batch data pipeline
 
 ## Deploy New Bedrock Prompts
-In order to add a new Bedrock prompt, you can easily do so by adding a new item into the local variable `bedrock_prompts` defined in `realtime/module/locals.tf`
+In order to deploy a new Bedrock prompt, you can easily do so by adding a new item into the local variable `bedrock_prompts` defined in `realtime/module/locals.tf`
 
-As an example, I am adding two new bedrock prompts named `tesseractMainPrompt` and `tesseractSystemPrompt` by adding an item for each to the local variable `bedrock_prompts`
+As an example, I am deploying two new bedrock prompts named `tesseractMainPrompt` and `tesseractSystemPrompt` by adding an item for each to the local variable `bedrock_prompts`
 
 ```hcl
 locals {
