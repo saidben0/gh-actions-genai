@@ -236,6 +236,111 @@ jobs:
 
 - Push your changes to deploy the infrastructure that supports the Batch data pipeline
 
+## Deploy New Bedrock Prompts
+In order to add a new Bedrock prompt, you can easily do so by adding a new item into the local variable `bedrock_prompts` defined in `realtime/module/locals.tf`
+
+As an example, I am adding two new bedrock prompts named `tesseractMainPrompt` and `tesseractSystemPrompt` by adding an item for each to the local variable `bedrock_prompts`
+
+```hcl
+locals {
+  bedrock_prompts = {
+    "mainPrompt" = {
+      default_variant = "variantOne"
+      name            = "${var.prefix}-${var.env}-mainPrompt"
+      variants = [
+        {
+          inference_configuration = {
+            text = {
+              temperature = 0
+              top_p       = 0.9000000000000000
+              max_tokens  = 300
+              top_k       = 250
+            }
+          }
+          name = "variantOne"
+          template_configuration = {
+            text = {
+              text = file("${path.module}/templates/prompt_template.txt")
+            }
+          }
+          template_type = "TEXT"
+        }
+      ]
+    }
+    "systemPrompt" = {
+      default_variant = "variantOne"
+      name            = "${var.prefix}-${var.env}-systemPrompt"
+      variants = [
+        {
+          inference_configuration = {
+            text = {
+              temperature = 0
+              top_p       = 0.9000000000000000
+              max_tokens  = 300
+              top_k       = 250
+            }
+          }
+          name = "variantOne"
+          template_configuration = {
+            text = {
+              text = file("${path.module}/templates/system_prompt_template.txt")
+            }
+          }
+          template_type = "TEXT"
+        }
+      ]
+    }
+    "tesseractMainPrompt" = {
+      default_variant = "variantOne"
+      name            = "${var.prefix}-${var.env}-tesseractMainPrompt"
+      variants = [
+        {
+          inference_configuration = {
+            text = {
+              temperature = 0
+              top_p       = 0.9000000000000000
+              max_tokens  = 300
+              top_k       = 250
+            }
+          }
+          name = "variantOne"
+          template_configuration = {
+            text = {
+              text = file("${path.module}/templates/tesseract_prompt_template.txt")
+            }
+          }
+          template_type = "TEXT"
+        }
+      ]
+    }
+    "tesseractSystemPrompt" = {
+      default_variant = "variantOne"
+      name            = "${var.prefix}-${var.env}-tesseractSystemPrompt"
+      variants = [
+        {
+          inference_configuration = {
+            text = {
+              temperature = 0
+              top_p       = 0.9000000000000000
+              max_tokens  = 300
+              top_k       = 250
+            }
+          }
+          name = "variantOne"
+          template_configuration = {
+            text = {
+              text = file("${path.module}/templates/tesseract_system_prompt_template.txt")
+            }
+          }
+          template_type = "TEXT"
+        }
+      ]
+    }
+  }
+}
+```
+Once the two items had been added to the local variable then you need to commit and push the code into the repo, this should trigger the `Real-Time` pipeline to run and deploy the newly added Bedrock prompts.
+
 
 ## `Terraform Destroy` workflow
 The `terraform destroy` workflow is configured to run manually to prevent accidental destruction of the infrastructure that supports the data pipelines.
