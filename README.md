@@ -26,7 +26,7 @@ Let’s assume that you want to deploy the data pipelines into the production en
 
 - From GitHub UI:
   - Create the new environment that you want to deploy into (i.e- `prod`)
-  - Add the `IAM_ROLE_ARN` that the GitHub Actions CI/CD pipeline must assume to deploy the infrastructure into the new AWS environment (i.e- `prod`).
+  - Add the `GH_OIDC_IAM_ROLE_ARN` that the GitHub Actions CI/CD pipeline must assume to deploy the infrastructure into the new AWS environment (i.e- `prod`); the value of this variable is the ARN number of `gh-oidc-${env}-iam-role`.
 
 
 #### Step#1: Publish the lambda layer

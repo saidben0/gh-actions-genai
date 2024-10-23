@@ -59,7 +59,7 @@ jobs:
       - name: Configure AWS Creds
         uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: ${{ vars.IAM_ROLE_ARN_DEV }} # use github UI to define as an env variable for corresponding environment
+          role-to-assume: ${{ vars.GH_OIDC_IAM_ROLE_ARN }} # use github UI to define as an env variable for corresponding environment
           aws-region: ${{ inputs.aws-region }}
           role-session-name: enverus-role-session
           role-duration-seconds: 3600
@@ -127,7 +127,7 @@ jobs:
       - name: Configure AWS Creds
         uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: ${{ vars.IAM_ROLE_ARN_DEV }} # use github UI to define as an env variable for corresponding environment
+          role-to-assume: ${{ vars.GH_OIDC_IAM_ROLE_ARN }} # use github UI to define as an env variable for corresponding environment
           aws-region: ${{ inputs.aws-region }}
           role-session-name: enverus-role-session
           role-duration-seconds: 3600
