@@ -3,7 +3,7 @@ name: Real-Time Pipeline
 on:
   push:
     branches:
-      - dev
+      - _dev
     paths:
       - 'realtime/**'
   workflow_run: # In order for this to work, you must use the default repo branch.
