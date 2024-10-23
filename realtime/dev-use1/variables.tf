@@ -7,11 +7,10 @@ variable "env" {
   type = string
 }
 
-variable "inputs_bucket_name" {
-  type    = string
-  default = "enverus-courthouse-dev-chd-plants"
-  # default = "enverus-courthouse-dev-chd-plants-0823" # for testing in proserve shared acc
-}
+# variable "inputs_bucket_name" {
+#   type    = string
+#   default = "enverus-courthouse-dev-chd-plants"
+# }
 
 variable "python_version" {
   type = string

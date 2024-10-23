@@ -3,7 +3,7 @@ module "dev-use1" {
   python_version           = var.python_version
   lambda_role_name         = var.lambda_role_name
   lambda_layer_version_arn = var.lambda_layer_version_arn
-  inputs_bucket_name       = var.inputs_bucket_name
+  # inputs_bucket_name       = var.inputs_bucket_name
   env                      = var.env
   tags                     = var.tags
 

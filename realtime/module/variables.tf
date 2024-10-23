@@ -24,10 +24,10 @@ variable "tags" {
   default = {}
 }
 
-variable "inputs_bucket_name" {
-  type    = string
-  default = "enverus-courthouse-dev-chd-plants"
-}
+# variable "inputs_bucket_name" {
+#   type    = string
+#   default = "enverus-courthouse-dev-chd-plants"
+# }
 
 
 
