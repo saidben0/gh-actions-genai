@@ -3,7 +3,7 @@ name: Batch Pipeline
 on:
   push:
     branches:
-      - dev
+      - _dev
     paths:
       - 'batch/**'
   workflow_run: # In order for this to work, you must use the default repo branch.
