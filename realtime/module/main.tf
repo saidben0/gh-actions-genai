@@ -11,10 +11,10 @@ data "aws_region" "this" {
 }
 
 
-# data "aws_s3_bucket" "inputs_bucket" {
-#   provider = aws.acc
-#   bucket   = var.inputs_bucket_name
-# }
+data "aws_s3_bucket" "inputs_bucket" {
+  provider = aws.acc
+  bucket   = var.inputs_bucket_name
+}
 
 data "aws_iam_role" "llandman_lambda_exec_role" {
   provider = aws.acc

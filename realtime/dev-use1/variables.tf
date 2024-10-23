@@ -7,10 +7,10 @@ variable "env" {
   type = string
 }
 
-# variable "inputs_bucket_name" {
-#   type    = string
-#   default = "enverus-courthouse-dev-chd-plants"
-# }
+variable "inputs_bucket_name" {
+  type    = string
+  default = "enverus-courthouse-dev-chd-plants-20241023"
+}
 
 variable "python_version" {
   type = string
