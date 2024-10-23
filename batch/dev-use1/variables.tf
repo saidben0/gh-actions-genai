@@ -34,11 +34,10 @@ variable "tags" {
 
 
 
-# variable "inputs_bucket_name" {
-#   type    = string
-#   default = "enverus-courthouse-dev-chd-plants"
-#   # default = "enverus-courthouse-dev-chd-plants-0823" # for testing in proserve shared acc
-# }
+variable "inputs_bucket_name" {
+  type    = string
+  default = "enverus-courthouse-dev-chd-plants-20241023"
+}
 
 # variable "lambda_function_name" {
 #   type    = string

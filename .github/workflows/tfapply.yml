@@ -137,8 +137,7 @@ jobs:
           cd ${{ inputs.data-pipeline }}/${{ inputs.aws-env-dir }}/
           lambda_layer_version_arn=$(aws lambda list-layer-versions \
                                           --layer-name python-libs \
-                                          --query 'LayerVersions[0].LayerVersionArn' \
-                                          --output text)
+                                          --query 'LayerVersions[0]' --output json | jq -r '.LayerVersionArn')
           terraform plan \
             -var env=${{ inputs.env }} \
             -var lambda_role_name=${{ inputs.lambda-role-name }} \
