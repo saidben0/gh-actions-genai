@@ -1,0 +1,107 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": [
+                "sqs:SendMessage",
+                "sqs:ReceiveMessage",
+                "sqs:GetQueueAttributes",
+                "sqs:DeleteMessage"
+            ],
+            "Effect": "Allow",
+            "Resource": "arn:aws:sqs:*:${account_id}:llandman-*",
+            "Sid": "ManageLLandManSQSQueues"
+        },
+        {
+            "Action": [
+                "s3:Put*",
+                "s3:List*",
+                "s3:Get*",
+                "s3:Describe*",
+                "s3-object-lambda:List*",
+                "s3-object-lambda:Get*"
+            ],
+            "Effect": "Allow",
+            "Resource": [
+                "arn:aws:s3:::bedrock-batch-inference-sben-20240920/*",
+                "arn:aws:s3:::bedrock-batch-inference-sben-20240920",
+                "arn:aws:s3:::enverus-courthouse-dev-chd-plants/*",
+                "arn:aws:s3:::enverus-courthouse-dev-chd-plants"
+            ],
+            "Sid": "RetrieveInputsBucketObjects"
+        },
+        {
+            "Action": [
+                "dynamodb:Update*",
+                "dynamodb:PutItem",
+                "dynamodb:DescribeTimeToLive",
+                "dynamodb:DescribeTable"
+            ],
+            "Effect": "Allow",
+            "Resource": "arn:aws:dynamodb:*:${account_id}:table/llandman-*",
+            "Sid": "ManageLLandManDynamoDBTable"
+        },
+        {
+            "Action": [
+                "bedrock:ListPrompts",
+                "bedrock:InvokeModel",
+                "bedrock:GetPrompt"
+            ],
+            "Effect": "Allow",
+            "Resource": [
+                "arn:aws:bedrock:*:${account_id}:prompt/*",
+                "arn:aws:bedrock:*::foundation-model/*"
+            ],
+            "Sid": "LLandmanBedrockPromptManagement"
+        },
+        {
+            "Action": [
+                "logs:PutLogEvents",
+                "logs:CreateLogStream",
+                "logs:CreateLogGroup"
+            ],
+            "Effect": "Allow",
+            "Resource": "arn:aws:logs:*:${account_id}:log-group:/aws/lambda/llandman-*:*",
+            "Sid": "CreatePutCloudWatchLogsOfLlandmanLambdaFunction"
+        },
+        {
+            "Action": [
+                "ec2:DescribeNetworkInterfaces",
+                "ec2:DescribeInstances",
+                "ec2:DeleteNetworkInterface",
+                "ec2:CreateNetworkInterface",
+                "ec2:AttachNetworkInterface"
+            ],
+            "Effect": "Allow",
+            "Resource": "*",
+            "Sid": "AllowLambdaFunctionToConnectToVPC"
+        },
+        {
+            "Action": [
+                "bedrock:UntagResource",
+                "bedrock:TagResource",
+                "bedrock:StopModelInvocationJob",
+                "bedrock:ListTagsForResource",
+                "bedrock:ListModelInvocationJobs",
+                "bedrock:ListFoundationModels",
+                "bedrock:GetModelInvocationJob",
+                "bedrock:GetFoundationModel",
+                "bedrock:CreateModelInvocationJob"
+            ],
+            "Effect": "Allow",
+            "Resource": "*",
+            "Sid": "PermissionsBatchInference"
+        },
+        {
+            "Action": "iam:PassRole",
+            "Condition": {
+                "StringEquals": {
+                    "iam:PassedToService": "bedrock.amazonaws.com"
+                }
+            },
+            "Effect": "Allow",
+            "Resource": "arn:aws:iam::*:role/*llandman*",
+            "Sid": "LambdaExecPassRoleToBedrock"
+        }
+    ]
+}

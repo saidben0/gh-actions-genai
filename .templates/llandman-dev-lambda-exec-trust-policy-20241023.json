@@ -5,8 +5,8 @@
             "Effect": "Allow",
             "Principal": {
                 "Service": [
-                    "batch.amazonaws.com",
-                    "ecs-tasks.amazonaws.com"
+                    "bedrock.amazonaws.com",
+                    "lambda.amazonaws.com"
                 ]
             },
             "Action": "sts:AssumeRole"
